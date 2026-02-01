@@ -1,0 +1,30 @@
+
+# Ignore all .ipynb_checkpoints folders/Python cache files
+_pycache_/
+__pycache__/
+.ipynb_checkpoints/
+*.pyc
+
+# Ignore Pytest cache
+.pytest_cache/
+
+# Ignore Mac OS X temporary files
+.DS_Store
+
+# Ignore vscode config
+.vscode/
+
+# Ignore egg package files
+*.egg-info/
+
+# Ignore data files 
+seismic_facies/data
+
+# Ignore linting cache
+.ruff_cache
+
+# Ignore environment files
+.env
+.venv/
+.python-version
+uv.lock

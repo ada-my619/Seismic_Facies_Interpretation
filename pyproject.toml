@@ -1,0 +1,61 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "seis_facies"
+version = "0.1.0"
+description = "Seismic Facies Prediction Tool"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+    { name = "Naufal Yunan", email = "naufal.yunan25@imperial.ac.uk" },
+]
+keywords = ["facies", "seismic", "segmentation", "prediction tool", "seis_facies"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.13"
+]
+
+dependencies = [
+    "matplotlib>=3.10.8",
+    "nbformat>=5.10.4",
+    "numpy",
+    "pandas",
+    "torch",
+    "tqdm",
+    "torchvision",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=6.0",
+    "pytest-cov",
+    "pytest-timeout",
+    "torch"
+]
+
+lint = [
+    "ruff",
+]
+
+dev = [
+    "pre-commit",
+]
+
+[project.urls]
+Repository = "https://github.com/ada-my619/Seismic_Facies_Interpretation"
+
+[project.scripts]
+rockml = "seismic_facies.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["seismic_facies/*"]
+
+[tool.setuptools.package-data]
+include = ["seismic_facies/data/*"]
+
+[tool.ruff]
+# Allow lines to be as long as 120.
+line-length = 120
