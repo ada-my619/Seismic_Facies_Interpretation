@@ -1,3 +1,3 @@
-from . import viz_dataset
+from . import viz_dataset, viz_unet
 
-__all__ = ["viz_dataset"]
+__all__ = ["viz_dataset", "viz_unet"]
