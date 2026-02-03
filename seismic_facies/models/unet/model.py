@@ -91,3 +91,103 @@ class UNet(nn.Module):
       output = output[:, :, :H, :W]
       # print(output.shape)
       return output
+    
+
+class SelfAttention2D(nn.Module):
+    """
+    Simple self-attention over spatial positions.
+    x: (B, C, H, W) -> (B, C, H, W)
+    """
+    def __init__(self, channels, num_heads=4, dropout=0.0, gn_groups=8):
+        super().__init__()
+        assert channels % num_heads == 0, "channels must be divisible by num_heads"
+        self.norm = nn.GroupNorm(gn_groups, channels)
+        self.attn = nn.MultiheadAttention(
+            embed_dim=channels,
+            num_heads=num_heads,
+            dropout=dropout,
+            batch_first=True
+        )
+        self.ff = nn.Sequential(
+            nn.Linear(channels, channels * 4),
+            nn.SiLU(),
+            nn.Linear(channels * 4, channels),
+        )
+
+    def forward(self, x):
+        b, c, h, w = x.shape
+        res = x
+
+        x = self.norm(x)
+        x = x.view(b, c, h * w).transpose(1, 2)  # (B, N, C)
+
+        attn_out, _ = self.attn(x, x, x, need_weights=False)
+        x = x + attn_out
+        x = x + self.ff(x)
+
+        x = x.transpose(1, 2).view(b, c, h, w)
+        return res + x
+    
+class UNetAttn(nn.Module):
+    def __init__(self, in_channels=1, n_classes=6):
+        super().__init__()
+        self.e1 = EncBlock(in_channels, 8)
+        self.e2 = EncBlock(8, 16)
+        self.e3 = EncBlock(16, 32)
+        self.e4 = EncBlock(32, 64)
+        self.e5 = EncBlock(64, 128)
+
+        self.b1 = nn.Sequential(
+            ConvBlock(128, 256),
+            nn.Dropout2d(p=0.2)
+        )
+
+        self.d1 = DecBlock(256, 128)
+        self.d2 = DecBlock(128, 64)
+        self.d3 = DecBlock(64, 32)
+        self.d4 = DecBlock(32, 16)
+        self.d5 = DecBlock(16, 8)
+
+        self.output = nn.Conv2d(8, n_classes, kernel_size=1)
+
+        # attention modules
+        # e5 output has 128 channels; d1 output has 128 channels; bottleneck has 256 channels.
+        self.attn_e5 = SelfAttention2D(channels=128, num_heads=8)
+        self.attn_bot = SelfAttention2D(channels=256, num_heads=8)
+        self.attn_d1 = SelfAttention2D(channels=128, num_heads=8)
+
+    def forward(self, x):
+        B, C, H, W = x.shape
+
+        pad_h = (32 - H % 32) % 32
+        pad_w = (32 - W % 32) % 32
+        x = F.pad(x, (0, pad_w, 0, pad_h))
+
+        s1, x = self.e1(x)
+        s2, x = self.e2(x)
+        s3, x = self.e3(x)
+        s4, x = self.e4(x)
+
+        s5, x = self.e5(x)
+
+        # attention on e5 skip
+        s5 = self.attn_e5(s5)
+
+        x = self.b1(x)
+
+        # attention at bottleneck
+        x = self.attn_bot(x)
+
+        x = self.d1(x, s5)
+
+        # attention after d1
+        #x = self.attn_d1(x)
+
+        x = self.d2(x, s4)
+        x = self.d3(x, s3)
+        x = self.d4(x, s2)
+        x = self.d5(x, s1)
+
+        output = self.output(x)
+        output = output[:, :, :H, :W]
+        return output
