@@ -19,7 +19,7 @@ seismic_facies/
 
 ---
 
-p.s. data for training can be downloaded in [here](https://drive.google.com/drive/folders/1fFbanBLDqQn6Cu9QYzdRgm92YiixV1X-?usp=drive_link)
+p.s. data for training can be downloaded in [here](https://drive.google.com/drive/folders/1jk_MDUXeJW4HJixhYqwuSBwOlui6rG3Q?usp=sharing)
 
 
 ## Software Installation Guide
